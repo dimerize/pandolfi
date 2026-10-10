@@ -6,6 +6,7 @@ import { BillboardPhysics } from './billboard-physics';
 import { site } from '@content/site';
 import DoorSpill from './DoorSpill';
 import DoorLink from './DoorLink';
+import { PassingHeadlights } from './passing-headlights';
 import styles from './Billboard.module.css';
 
 const PHOTO = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/study/nothing-lasts-forever.png`;
@@ -56,8 +57,9 @@ export default function Billboard({ lighting = false }: { lighting?: boolean }) 
     }
 
     (async () => {
-      const [THREE, lightingModule] = await Promise.all([
+      const [THREE, lightingModule, washModule] = await Promise.all([
         import('three'), lighting ? import('./relighting') : Promise.resolve(null),
+        lighting ? import('./headlight-wash') : Promise.resolve(null),
       ]);
       if (cancelled) return;
       let renderer: InstanceType<typeof THREE.WebGLRenderer>;
@@ -104,6 +106,8 @@ export default function Billboard({ lighting = false }: { lighting?: boolean }) 
       geometry.setIndex(physics.indices());
       geometry.computeVertexNormals();
       const relighting = lightingModule ? new lightingModule.SignRelighting(renderer, geometry, texture) : null;
+      const headlightWash = washModule ? new washModule.HeadlightWash(texture) : null;
+      if (headlightWash) scene.add(headlightWash.mesh);
       const material = relighting?.clothMaterial ?? new THREE.ShaderMaterial({
         uniforms: { photograph: { value: texture } },
         side: THREE.DoubleSide,
@@ -264,12 +268,32 @@ export default function Billboard({ lighting = false }: { lighting?: boolean }) 
       let last = 0;
       let lost = false;
       let activeUntil = 0;
+      let settlingRemaining = 0;
+      const passing = lighting ? new PassingHeadlights() : null;
+      let passingElapsed: number | null = null;
+      let passingTimer: ReturnType<typeof setTimeout> | null = null;
+      let passingDue = 0;
+      let passingRemaining = passing ? passing.nextDelay() * 1000 : 0;
+      const schedulePassing = (delay: number) => {
+        if (!passing || lost || cancelled) return;
+        if (passingTimer !== null) clearTimeout(passingTimer);
+        passingRemaining = delay;
+        passingTimer = null;
+        if (document.hidden) return;
+        passingDue = performance.now() + delay;
+        passingTimer = setTimeout(() => {
+          passingTimer = null;
+          passingElapsed = 0;
+          wake();
+        }, delay);
+      };
       const animate = (now: number) => {
         frameId = 0;
         if (lost) return;
         const dt = last ? Math.min((now - last) / 1000, 0.04) : 1 / 60;
         last = now;
-        physics.step(dt);
+        // A distant car changes the light, not the settled fabric's pose.
+        if (dragging || now < activeUntil) physics.step(dt);
         if (invitationTime !== null) {
           if (invitationTime < 0) {
             try { sessionStorage.setItem('mqn-sign-invited-v1', '1'); } catch { /* Storage is optional. */ }
@@ -290,11 +314,24 @@ export default function Billboard({ lighting = false }: { lighting?: boolean }) 
           edgePositions[i * 3 + 2] = physics.positions[p + 2] + 0.002;
         }
         if (edgeGeometry.attributes.position) edgeGeometry.attributes.position.needsUpdate = true;
+        if (passing && passingElapsed !== null) {
+          passingElapsed += dt;
+          const light = passing.sample(passingElapsed);
+          const strength = light.strength * 0.75;
+          relighting?.setPassingLight(light.position, strength);
+          headlightWash?.setPassingLight(light.position, strength);
+          canvas.dataset.headlights = light.progress.toFixed(3);
+          if (light.progress >= 1) {
+            passingElapsed = null;
+            canvas.dataset.headlights = 'waiting';
+            schedulePassing(passing.nextDelay() * 1000);
+          }
+        }
         relighting?.update();
         renderer.render(scene, camera);
         canvas.dataset.fabricState = 'ready';
         interaction.tabIndex = 0;
-        if (!document.hidden && (dragging || invitationTime !== null || now < activeUntil)) frameId = requestAnimationFrame(animate);
+        if (!document.hidden && (dragging || invitationTime !== null || passingElapsed !== null || now < activeUntil)) frameId = requestAnimationFrame(animate);
         else last = 0;
       };
       wake = (seconds = 0) => {
@@ -304,19 +341,38 @@ export default function Billboard({ lighting = false }: { lighting?: boolean }) 
       const visibility = () => {
         cancelAnimationFrame(frameId); frameId = 0;
         up(); last = 0;
-        if (!document.hidden && !lost) wake();
+        if (document.hidden) {
+          settlingRemaining = Math.max(0, activeUntil - performance.now());
+          activeUntil = 0;
+        }
+        if (document.hidden && passingTimer !== null) {
+          passingRemaining = Math.max(0, passingDue - performance.now());
+          clearTimeout(passingTimer); passingTimer = null;
+        }
+        if (!document.hidden && !lost) {
+          activeUntil = performance.now() + settlingRemaining;
+          settlingRemaining = 0;
+          if (passingElapsed === null) schedulePassing(passingRemaining);
+          wake();
+        }
       };
       const contextLost = (e: Event) => {
         e.preventDefault(); lost = true; up(); cancelAnimationFrame(frameId);
+        if (passingTimer !== null) clearTimeout(passingTimer);
         canvas.dataset.fabricState = 'unavailable';
         interaction.tabIndex = -1;
       };
       document.addEventListener('visibilitychange', visibility);
       canvas.addEventListener('webglcontextlost', contextLost);
       rebuild();
+      if (passing) {
+        canvas.dataset.headlights = 'waiting';
+        schedulePassing(passingRemaining);
+      }
       frameId = requestAnimationFrame(animate);
       teardown = () => {
         cancelAnimationFrame(frameId);
+        if (passingTimer !== null) clearTimeout(passingTimer);
         document.removeEventListener('visibilitychange', visibility);
         canvas.removeEventListener('webglcontextlost', contextLost);
         root.removeEventListener('pointerdown', down);
@@ -328,6 +384,7 @@ export default function Billboard({ lighting = false }: { lighting?: boolean }) 
         geometry.dispose(); texture.dispose(); backingGeometry.dispose(); edgeGeometry.dispose();
         if (relighting) relighting.dispose();
         else { material.dispose(); backingMaterial.dispose(); edgeMaterial.dispose(); }
+        headlightWash?.dispose();
         renderer.dispose();
       };
     })();

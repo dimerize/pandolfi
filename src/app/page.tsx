@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <PhotoViewport>
       <h1 className="sr">i crave imperfection</h1>
-      <Billboard />
+      <Billboard lighting />
     </PhotoViewport>
   );
 }

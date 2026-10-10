@@ -2,7 +2,7 @@
 
 **mannequin · (mqn) · @sammypandolfi**
 
-[Enter the website](https://dimerize.github.io/pandolfi/) · [@icraveimperfection](https://instagram.com/icraveimperfection)
+[Enter the website](https://pandol.fi/) · [@icraveimperfection](https://instagram.com/icraveimperfection)
 
 A nighttime street, held still. Two lamps illuminate a fabric sign above the storefronts. A cut loosens the cloth, exposes its backing, and changes the shadow. Farther down the building, an open doorway leads to the work on Instagram.
 
@@ -26,7 +26,7 @@ A lower corner of the sign lifts, catches the lamps, and settles once per tab se
 
 Two fixed lights reproduce the lamps below the sign. Their shadows respond to the torn geometry against a charcoal backing. Occasionally, paired, overlapping beams from an unseen passing car cross the whole facade, storefront, and pavement. The moving light briefly picks out folds and throws longer shadows before the street returns to its original exposure.
 
-The first headlight pass starts after 12–18 seconds. A pass lasts 5.2 seconds, followed by 70–110 seconds of quiet. The former [`/light/` preview](https://dimerize.github.io/pandolfi/light/) now shows the same scene as the homepage.
+The first headlight pass starts after 12–18 seconds. A pass lasts 5.2 seconds, followed by 70–110 seconds of quiet. The former [`/light/` preview](https://pandol.fi/light/) now shows the same scene as the homepage.
 
 ## Phones, access, and stillness
 
@@ -82,10 +82,10 @@ Earlier portfolio pages remain at `/work/`, `/work/[slug]/`, and `/about/`. Thei
 
 Push to `main`. The **Publish website** workflow installs locked dependencies, runs `npm run verify`, packages `out/`, and deploys through GitHub Pages. A failed verification stops the deployment. The workflow can also be run manually from [Actions](https://github.com/dimerize/pandolfi/actions/workflows/pages.yml).
 
-Pages must use **GitHub Actions** as its build source. The workflow reads the site's base path and address from Pages, so the current deployment uses `/pandolfi` for assets and routes. To reproduce that build locally:
+Pages must use **GitHub Actions** as its build source. The workflow reads the site's base path and address from Pages. The custom domain serves assets and routes at the root, with no `/pandolfi` prefix. To reproduce that build locally:
 
 ```sh
-STATIC_EXPORT=true NEXT_PUBLIC_BASE_PATH=/pandolfi NEXT_PUBLIC_SITE_URL=https://dimerize.github.io/pandolfi npm run verify
+STATIC_EXPORT=true NEXT_PUBLIC_BASE_PATH='' NEXT_PUBLIC_SITE_URL=https://pandol.fi npm run verify
 ```
 
 For a static preview at a local server's root instead:
@@ -97,15 +97,11 @@ python3 -m http.server 8080 --directory out
 
 `npm run start` serves a normal Next.js server build; use a static file server for `out/`.
 
-## The address: active now, custom domain later
+## Domain
 
-**The active address is [dimerize.github.io/pandolfi](https://dimerize.github.io/pandolfi/).** The intended custom domain is `pandol.fi`.
+**The active address is [pandol.fi](https://pandol.fi/).** GitHub Pages enforces HTTPS. `www.pandol.fi` and the original `dimerize.github.io/pandolfi/` address redirect to the custom domain.
 
-As checked on **10 October 2026**, registration and the prepared Netim DNS zone exist, but the `.fi` registry has not published the nameserver delegation. Public DNS still returns NXDOMAIN. The GitHub Pages custom-domain setting has therefore been cleared, restoring the working HTTPS address above.
-
-Do not assign an unresolved domain to Pages: GitHub immediately redirects the default address to it. That would make the working site inaccessible too.
-
-The prepared DNS records are:
+The domain is registered through Netim. Its DNS records are:
 
 | Name | Type | Value |
 | --- | --- | --- |
@@ -113,13 +109,13 @@ The prepared DNS records are:
 | `@` | `AAAA` | `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`, `2606:50c0:8003::153` (four records) |
 | `www` | `CNAME` | `dimerize.github.io` |
 
-Netim's nameservers are `ns1.netim.net`, `ns2.netim.net`, and `ns3.netim.net`. The pending step is their delegation at the registry, not another change to the website files.
+Netim's nameservers are `ns1.netim.net`, `ns2.netim.net`, and `ns3.netim.net`; their delegation is published in the `.fi` registry.
 
-For the eventual handoff:
+For future hosting changes:
 
-1. Confirm the registry delegation and public resolution of both `pandol.fi` and `www.pandol.fi` before changing Pages.
-2. Configure the custom domain in Pages and rerun the publishing workflow. This changes the export to root-relative paths automatically. This Actions-based deployment does not need a `CNAME` file.
-3. Check GitHub's DNS verification and certificate issuance, enable **Enforce HTTPS** when available, and verify the image, scripts, cuts, and doorway at the new address. Verify the default address and `www` redirect correctly.
-4. If the new address cannot serve the site securely, clear the custom-domain setting and rerun the workflow to restore `/pandolfi/`. A cached redirect may require a fresh URL query or browser cache refresh.
+1. Keep the custom domain set to `pandol.fi` in the repository's Pages settings and keep **Enforce HTTPS** enabled. This Actions-based deployment does not need a `CNAME` file.
+2. Rerun the publishing workflow after changing the Pages domain or HTTPS setting so asset paths and site metadata match the active address.
+3. Verify public DNS, certificate validity, images, scripts, cuts, the doorway link, and the redirects from the original address and `www`.
+4. If a domain change needs to be rolled back, clear the custom-domain setting and rerun the workflow to restore `/pandolfi/`. A cached redirect may require a fresh URL query or browser cache refresh.
 
-Update the public links in this README only after that handoff succeeds. See [GitHub's custom-domain documentation](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site) and [Netim's nameserver documentation](https://support.netim.com/en/docs/general-public/domain-name/managing-dns-nameservers) for the hosting details.
+See [GitHub's custom-domain documentation](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site) and [Netim's nameserver documentation](https://support.netim.com/en/docs/general-public/domain-name/managing-dns-nameservers) for the hosting details.

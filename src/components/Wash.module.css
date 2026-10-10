@@ -1,0 +1,15 @@
+.wash {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  min-height: 44px;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: color var(--dur-quick) var(--ease-out);
+}
+
+.wash:hover,
+.wash:focus-visible {
+  color: var(--ink);
+}

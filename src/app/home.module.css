@@ -1,0 +1,15 @@
+.entry {
+  padding-top: clamp(1.5rem, 8vh, 5rem);
+  max-width: 36ch;
+}
+
+.name {
+  font-size: var(--t-mark);
+  letter-spacing: var(--track-print);
+  color: var(--ink);
+}
+
+.line {
+  margin-top: 0.35rem;
+  color: var(--ink);
+}

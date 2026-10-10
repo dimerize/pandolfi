@@ -1,0 +1,252 @@
+@import './tokens.css';
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Reset: only what this site needs.
+   ───────────────────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  color-scheme: light;
+  background: var(--cloth);
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--cloth);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: var(--t-body);
+  font-weight: 400;
+  line-height: var(--lh-body);
+  /* One weight is loaded. Nothing may be faked from it. */
+  font-synthesis: none;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+li,
+dt,
+dd {
+  overflow-wrap: break-word;
+}
+
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Links. Underlines are offset far enough that descenders stay readable.
+   ───────────────────────────────────────────────────────────────────────── */
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.u {
+  text-decoration: underline;
+  text-decoration-color: var(--ink-muted);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
+  transition: text-decoration-color var(--dur-quick) var(--ease-out);
+}
+
+.u:hover,
+.u:focus-visible {
+  text-decoration-color: var(--ink);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Focus: visible everywhere, never removed. Signal, 3.69:1 on the cloth.
+   ───────────────────────────────────────────────────────────────────────── */
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 1px solid var(--signal);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--cloth);
+}
+
+.skip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: var(--z-skip);
+  padding: 0.75rem 1.125rem;
+  background: var(--cloth);
+  color: var(--ink);
+  font-size: var(--t-print);
+  letter-spacing: var(--track-print);
+  border: 1px dashed var(--stitch);
+  transform: translateY(-120%);
+  transition: transform var(--dur-quick) var(--ease-out);
+}
+
+.skip:focus {
+  transform: translateY(0);
+}
+
+/*
+  An inline link is only as tall as its text, well under a comfortable touch
+  target. The padding grows the hit area to 44px and the negative margin
+  absorbs it, so the line box does not move.
+*/
+.tap {
+  display: inline-block;
+  padding-block: 0.9rem;
+  margin-block: -0.9rem;
+}
+
+/* Visually hidden, still focusable, still read aloud. */
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Typographic primitives.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Printed labels: nav, the label, spec keys, numbers. Lowercase, as he writes. */
+.print {
+  font-size: var(--t-print);
+  line-height: var(--lh-print);
+  letter-spacing: var(--track-print);
+  color: var(--ink-muted);
+}
+
+.print--ink {
+  color: var(--ink);
+}
+
+.prose {
+  max-width: var(--measure);
+  text-wrap: pretty;
+  hyphens: manual;
+}
+
+.prose p + p {
+  margin-top: 1.15em;
+}
+
+.prose a {
+  text-decoration: underline;
+  text-decoration-color: var(--ink-muted);
+  text-underline-offset: 0.25em;
+  transition: text-decoration-color var(--dur-quick) var(--ease-out);
+}
+
+.prose a:hover,
+.prose a:focus-visible {
+  text-decoration-color: var(--ink);
+}
+
+/* The whole ornament system: a running stitch. There are no solid lines. */
+.seam {
+  border-top: 1px dashed var(--stitch);
+}
+
+/*
+  A placeholder: something the maker has not confirmed. Loud on purpose, so
+  it cannot ship unnoticed. The README lists every one.
+*/
+.todo {
+  color: var(--signal);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Page shell.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.page {
+  position: relative;
+  z-index: var(--z-page);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--edge);
+  padding-bottom: calc(var(--edge) + env(safe-area-inset-bottom, 0px));
+}
+
+.page > main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Reduced motion. The cloth draws one frame (handled in its own code); here
+   the only transitions on the site, which are colour changes, become cuts.
+   ───────────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

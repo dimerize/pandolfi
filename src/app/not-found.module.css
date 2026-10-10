@@ -1,0 +1,26 @@
+.lost {
+  margin-top: clamp(2rem, 6vh, 4rem);
+}
+
+/* Stops a third of the way across the page. */
+.seam {
+  width: 33%;
+  margin-block: 1.2rem;
+  border-top: 1px dashed var(--stitch);
+}
+
+.home {
+  color: var(--ink-muted);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.25em;
+  transition:
+    color var(--dur-quick) var(--ease-out),
+    text-decoration-color var(--dur-quick) var(--ease-out);
+}
+
+.home:hover,
+.home:focus-visible {
+  color: var(--ink);
+  text-decoration-color: var(--ink);
+}

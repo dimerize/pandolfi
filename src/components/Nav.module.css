@@ -1,0 +1,28 @@
+.nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 1.75rem);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  /* 44px touch target, met by height rather than a visible box. */
+  min-height: 44px;
+  color: var(--ink-muted);
+  transition: color var(--dur-quick) var(--ease-out);
+}
+
+.link:hover,
+.link:focus-visible {
+  color: var(--ink);
+}
+
+/* A short running stitch under the current item. Signal use one of three. */
+.current {
+  color: var(--ink);
+  text-decoration: underline dashed;
+  text-decoration-color: var(--signal);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.35em;
+}

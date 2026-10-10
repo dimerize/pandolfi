@@ -1,0 +1,93 @@
+/*
+  Design tokens: the single source of truth for everything visual.
+  Every colour, size, duration and easing used anywhere lives here.
+  Nothing else in the project writes one.
+
+  Contrast ratios are against --cloth (#e9e4d8), WCAG 2 relative luminance.
+  Recompute them if you touch a colour: `node scripts/contrast.mjs`.
+*/
+
+:root {
+  /* ─── Cloth ─────────────────────────────────────────────────────────────
+     Unbleached cotton. The ground of every page.                         */
+  --cloth: #e9e4d8;
+
+  /* ─── Ink ───────────────────────────────────────────────────────────────
+     Indigo-black, the only text colour at full strength.                 */
+  --ink: #16181d; /* 14.00:1 */
+
+  /* Washed denim: metadata, muted rows, the label. 4.67:1 is the floor for
+     text. Do not darken --cloth without rechecking this.                 */
+  --ink-muted: #5f6470;
+
+  /* ─── Thread ────────────────────────────────────────────────────────────
+     The colour of every stitch sewn on the cloth.                        */
+  --thread: #f6f2e8;
+
+  /* The stitch colour of every rule on the pages. */
+  --stitch: var(--ink);
+
+  /* ─── Signal ────────────────────────────────────────────────────────────
+     The magenta the broken camera leaves. 3.69:1 on --cloth: enough for a
+     ring and a mark, never for text. Exactly three uses sitewide:
+       1. the current item in the navigation
+       2. the focus ring
+       3. a stitch at the moment it is being sewn
+     plus placeholders in square brackets, which must not survive launch. */
+  --signal: #d4219a;
+
+  /* What shows through a hole: the broken camera's picture, cast toward this. */
+  --raw-cast: #ff5fd0;
+
+  /* ─── Type ──────────────────────────────────────────────────────────────
+     One family. --font-plex-mono is set on <html> by next/font.          */
+  --font-mono: var(--font-plex-mono), ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --t-print: 0.6875rem; /* 11px  nav, label, spec keys, numbers */
+  --t-mark: 0.8125rem; /* 13px  the name */
+  --t-body: clamp(0.9375rem, 0.9rem + 0.2vw, 1rem); /* 15 → 16px */
+  --t-lead: clamp(1rem, 0.95rem + 0.3vw, 1.125rem); /* 16 → 18px, About only */
+
+  --track-print: 0.08em;
+  --lh-body: 1.6;
+  --lh-print: 1.4;
+  --measure: 60ch;
+
+  /* ─── Space ─────────────────────────────────────────────────────────────*/
+  --edge: clamp(1rem, 3vw, 2rem); /* page margin, all four sides */
+  --gap: clamp(1.25rem, 2.5vw, 2rem); /* between blocks and photographs */
+
+  /* ─── Motion ────────────────────────────────────────────────────────────
+     The only transitions outside the cloth: colour on links and the nav. */
+  --dur-quick: 120ms;
+  --ease-out: cubic-bezier(0.2, 0.6, 0.2, 1);
+
+  /* ─── Cloth geometry ────────────────────────────────────────────────────
+     Thread pitch, shared by the CSS still and the WebGL weave so the two
+     read as the same cloth. Keep them in step.                           */
+  --pitch: 6px;
+
+  /* ─── Depth ─────────────────────────────────────────────────────────────*/
+  --z-cloth: 0;
+  --z-page: 1;
+  --z-skip: 100;
+}
+
+@media (max-width: 60rem) {
+  :root {
+    --pitch: 5px;
+  }
+}
+
+@media (max-width: 40rem) {
+  :root {
+    --pitch: 4px;
+  }
+}
+
+/* Increased-contrast users get darker metadata. The composition is unchanged. */
+@media (prefers-contrast: more) {
+  :root {
+    --ink-muted: #3f434c; /* 7.81:1 */
+  }
+}

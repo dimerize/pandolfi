@@ -1,0 +1,53 @@
+.index {
+  margin-top: clamp(2rem, 6vh, 4rem);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 4ch minmax(12ch, 1fr) 1fr 5ch;
+  column-gap: var(--gap);
+  align-items: baseline;
+  padding-block: 0.9rem;
+  min-height: 44px;
+}
+
+/* On wide screens the two metadata spans sit in the grid themselves. */
+.meta {
+  display: contents;
+}
+
+.title {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
+  transition: text-decoration-color var(--dur-quick) var(--ease-out);
+}
+
+.row:hover .title,
+.row:focus-visible .title {
+  text-decoration-color: var(--ink);
+}
+
+.year {
+  text-align: right;
+}
+
+@media (max-width: 40rem) {
+  .row {
+    grid-template-columns: 4ch 1fr;
+    row-gap: 0.15rem;
+  }
+
+  /* Two lines: number and title, then materials and year in muted ink. */
+  .meta {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--gap);
+    grid-column: 2;
+  }
+
+  .year {
+    text-align: left;
+  }
+}

@@ -1,0 +1,24 @@
+.body {
+  margin-top: clamp(2rem, 6vh, 4rem);
+  font-size: var(--t-lead);
+}
+
+.by {
+  margin-top: clamp(2rem, 6vh, 3rem);
+}
+
+.link {
+  color: var(--ink-muted);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.25em;
+  transition:
+    color var(--dur-quick) var(--ease-out),
+    text-decoration-color var(--dur-quick) var(--ease-out);
+}
+
+.link:hover,
+.link:focus-visible {
+  color: var(--ink);
+  text-decoration-color: var(--ink);
+}

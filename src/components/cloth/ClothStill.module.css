@@ -1,0 +1,39 @@
+.cloth {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-cloth);
+  overflow: hidden;
+  background: var(--cloth);
+}
+
+/* Two sets of threads at the pitch the shader uses. 4% ink is a weave, not a grid. */
+.weave {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, rgb(22 24 29 / 0.045) 0 1px, transparent 1px var(--pitch)),
+    repeating-linear-gradient(90deg, rgb(22 24 29 / 0.045) 0 1px, transparent 1px var(--pitch));
+}
+
+/* Off-axis, like a pocket. The box is fixed; the picture keeps its ratio inside it. */
+.photo {
+  position: absolute;
+  left: 55%;
+  top: 22%;
+  width: 38vw;
+  height: 60vh;
+  object-fit: contain;
+  object-position: left top;
+}
+
+@media (max-width: 40rem) {
+  .photo {
+    left: auto;
+    top: auto;
+    right: var(--edge);
+    bottom: calc(var(--edge) + 3.25rem + env(safe-area-inset-bottom, 0px));
+    width: 72vw;
+    height: 56vh;
+    object-position: right bottom;
+  }
+}

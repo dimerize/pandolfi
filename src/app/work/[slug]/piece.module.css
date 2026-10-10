@@ -1,0 +1,91 @@
+.piece {
+  width: min(100%, 48rem);
+  margin-top: clamp(2rem, 6vh, 4rem);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding-bottom: 0.9rem;
+}
+
+/* The one italic on the site. */
+.title {
+  font-style: italic;
+}
+
+.spec {
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+  column-gap: var(--gap);
+  row-gap: 0.4rem;
+  padding-block: var(--gap);
+}
+
+.specRow {
+  display: contents;
+}
+
+.spec dt {
+  align-self: baseline;
+}
+
+.body {
+  padding-bottom: var(--gap);
+}
+
+.photos {
+  display: grid;
+  gap: var(--gap);
+  padding-bottom: var(--gap);
+}
+
+.next {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--gap);
+  padding-top: 0.9rem;
+}
+
+.nextLink {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-height: 44px;
+  justify-content: center;
+}
+
+.nextKey {
+  color: var(--ink-muted);
+}
+
+.nextTitle {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.25em;
+  transition: text-decoration-color var(--dur-quick) var(--ease-out);
+}
+
+.nextLink:hover .nextTitle,
+.nextLink:focus-visible .nextTitle {
+  text-decoration-color: var(--ink);
+}
+
+.nextLink:last-child:not(:first-child) {
+  margin-left: auto;
+  align-items: flex-end;
+}
+
+@media (max-width: 40rem) {
+  .spec {
+    grid-template-columns: 1fr;
+    row-gap: 0.1rem;
+  }
+
+  .spec dd {
+    margin-bottom: 0.6rem;
+  }
+}

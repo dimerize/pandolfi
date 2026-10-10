@@ -50,6 +50,7 @@ const CLOTH = /* glsl */ `
     float sideFade = smoothstep(0.0, 0.25, vWorld.x)
       * (1.0 - smoothstep(5.85, 6.10, vWorld.x));
     float alpha = foregroundFade * sideFade;
+    if (alpha <= 0.001) discard;
     vec3 color;
     if (gl_FrontFacing) {
       float illuminated = lamp(vWorld, n, uLamp0) + lamp(vWorld, n, uLamp1);
@@ -292,6 +293,7 @@ export class SignRelighting {
           float sideFade = smoothstep(0.0, 0.25, vWorld.x)
             * (1.0 - smoothstep(5.85, 6.10, vWorld.x));
           float alpha = foregroundFade * sideFade * 0.76;
+          if (alpha <= 0.001) discard;
           vec3 color = vec3(0.65, 0.73, 0.76);
           if (uPassingStrength > 0.001) {
             vec3 ray = uPassingPosition - vWorld;

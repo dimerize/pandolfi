@@ -40,35 +40,55 @@ const FRAGMENT = /* glsl */ `
     return smoothstep(-0.012, 0.022, margin);
   }
 
+  float buildingSurface(vec2 point) {
+    float x = point.x;
+    // Trace the photographed roofline, rather than cutting all light off at
+    // storefront height. The billboard itself occludes this layer in depth.
+    float roof;
+    if (x < 0.77) roof = mix(1.86, 1.64, x / 0.77);
+    else if (x < 2.80) roof = mix(1.43, 1.48, (x - 0.77) / 2.03);
+    else if (x < 3.48) roof = mix(1.19, 1.22, (x - 2.80) / 0.68);
+    else if (x < 5.15) roof = mix(1.16, 1.24, (x - 3.48) / 1.67);
+    else if (x < 5.80) roof = mix(1.14, 1.42, (x - 5.15) / 0.65);
+    else roof = 0.93;
+    return smoothstep(roof, roof + 0.035, -point.y);
+  }
+
+  float headlamp(vec2 point, float sourceX) {
+    float rise = clamp((point.y - uPassingPosition.y) / 6.3, 0.0, 1.0);
+    // Each beam fans upward from an offscreen source. Its angled leading
+    // edge traverses the upper wall before the pool reaches the pavement.
+    float center = sourceX + (3.05 - sourceX) * rise * 0.18;
+    float width = 0.94 + rise * 0.50;
+    return bell(point.x, center, width) * (1.0 - rise * 0.18);
+  }
+
   void main() {
     vec2 point = vPhotoPoint;
-    float spread = 2.25 + 0.25 * clamp(uPassingPosition.z, 0.0, 1.5);
-    float travel = bell(point.x, uPassingPosition.x, spread);
-
-    // The headlights originate below the frame. Their wash reaches the
-    // pavement first, then the storefront and a small part of the facade.
-    float pavement = bell(point.y, uPassingPosition.y + 1.25, 0.84);
-    float storefront = bell(point.y, uPassingPosition.y + 2.18, 0.68);
-    float facade = bell(point.y, uPassingPosition.y + 3.05, 0.78);
-    float belowSky = 1.0 - smoothstep(-4.08, -3.47, point.y);
-    float footprint = travel * belowSky *
-      (0.76 * pavement + 0.68 * storefront + 0.15 * facade);
+    float first = headlamp(point, uPassingPosition.x - 0.62);
+    float second = headlamp(point, uPassingPosition.x + 0.62);
+    float travel = first + second * 0.92;
+    float groundFalloff = smoothstep(-7.10, -6.45, point.y);
+    float footprint = travel * buildingSurface(point) * groundFalloff;
 
     float doorHeight = bell(point.y, -5.65, 0.58);
     float leftJamb = bell(point.x, 5.20, 0.095);
     float rightJamb = bell(point.x, 5.68, 0.085);
-    float jamb = travel * doorHeight * (leftJamb + rightJamb) * 0.28;
+    float jamb = travel * doorHeight * (leftJamb + rightJamb) * 0.20;
     float occlusion = 1.0 - 0.88 * doorLeaf(point);
     float exposure = clamp((footprint + jamb) * occlusion, 0.0, 1.0);
-    float alpha = clamp(uStrength * exposure * 0.56, 0.0, 0.72);
+    float alpha = clamp(uStrength * exposure * 0.88, 0.0, 0.78);
     if (alpha < 0.001) discard;
 
     vec3 ink = texture2D(uPhoto, vUv).rgb;
     // Lift the existing pixels rather than laying a flat beam over them:
     // cracks, stone, glass, and pavement keep their photographed contrast.
-    vec3 warmed = ink * vec3(1.82, 1.72, 1.49);
     float detail = dot(ink, vec3(0.2126, 0.7152, 0.0722));
-    warmed += vec3(0.70, 0.65, 0.51) * (0.013 + detail * 0.075);
+    // Dark masonry takes the light; existing lit windows and lamps retain
+    // their exposure instead of turning into a white flash.
+    float response = 1.0 - smoothstep(0.18, 0.62, detail);
+    vec3 warmed = ink * (vec3(1.0) + vec3(2.3, 2.15, 1.85) * response);
+    warmed += vec3(0.92, 0.88, 0.76) * (0.006 + detail * 0.05) * response;
     gl_FragColor = vec4(warmed, alpha);
     #include <colorspace_fragment>
   }

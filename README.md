@@ -4,6 +4,10 @@
 
 A single nighttime photograph. Swipe across the “Nothing lasts forever” sign to cut its fabric; the lit doorway opens [@icraveimperfection on Instagram](https://instagram.com/icraveimperfection). Reload to restore the sign. The photograph and doorway still work when WebGL is unavailable or reduced motion is enabled.
 
+[Open the separate lighting study](https://dimerize.github.io/pandolfi/light/): the two photographed lamps cast changing shadows from the cloth onto the backing, and the doorway spills light onto the pavement.
+
+Both versions keep the photograph fixed while swiping. The doorway has an invisible touch area covering its threshold: press to brighten, release to enter, or slide outside to cancel. A lower fabric corner lifts once per tab session; fallen scraps fade into the foreground before the photograph ends.
+
 ## Local development
 
 Requires Node.js 22 or newer.

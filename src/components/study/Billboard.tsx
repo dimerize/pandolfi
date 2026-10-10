@@ -1,16 +1,19 @@
 'use client';
 
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import Image from 'next/image';
 import { BillboardPhysics } from './billboard-physics';
 import { site } from '@content/site';
+import DoorSpill from './DoorSpill';
+import DoorLink from './DoorLink';
 import styles from './Billboard.module.css';
 
 const PHOTO = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/study/nothing-lasts-forever.png`;
 type Point = [number, number, number];
 
 /** The image stays still; a mesh replaces only the four corners of the sign. */
-export default function Billboard() {
+export default function Billboard({ lighting = false }: { lighting?: boolean }) {
+  const [doorActive, setDoorActive] = useState(false);
   const lightId = useId().replace(/:/g, '');
   const rootRef = useRef<HTMLDivElement>(null);
   const photographRef = useRef<HTMLDivElement>(null);
@@ -35,6 +38,9 @@ export default function Billboard() {
       const top = (height - 710 * scale) / 2;
       dimensions = { width, height, scale, left, top };
       Object.assign(frame.style, { width: `${610 * scale}px`, height: `${710 * scale}px`, left: `${left}px`, top: `${top}px`, transform: 'none' });
+      // The simulation can keep falling, but its rendered pixels belong only
+      // to the photograph. Never let cloth or threads enter the letterbox.
+      canvas.style.clipPath = `inset(${top}px ${left}px ${top}px ${left}px)`;
       Object.assign(interaction.style, {
         left: `${left + 77 * scale}px`, top: `${top + 141 * scale}px`,
         width: `${207 * scale}px`, height: `${212 * scale}px`,
@@ -50,7 +56,9 @@ export default function Billboard() {
     }
 
     (async () => {
-      const THREE = await import('three');
+      const [THREE, lightingModule] = await Promise.all([
+        import('three'), lighting ? import('./relighting') : Promise.resolve(null),
+      ]);
       if (cancelled) return;
       let renderer: InstanceType<typeof THREE.WebGLRenderer>;
       try { renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' }); }
@@ -80,12 +88,23 @@ export default function Billboard() {
       };
       resizeScene();
       const physics = new BillboardPhysics();
+      let invitationTime: number | null = null;
+      try {
+        if (!sessionStorage.getItem('mqn-sign-invited-v1')) invitationTime = -0.65;
+      } catch { invitationTime = -0.65; }
+      const stopInvitation = () => {
+        if (invitationTime === null) return;
+        invitationTime = null;
+        physics.cancelInvitation();
+        canvas.dataset.fabricInvitation = 'finished';
+      };
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute('position', new THREE.BufferAttribute(physics.positions, 3).setUsage(THREE.DynamicDrawUsage));
       geometry.setAttribute('uv', new THREE.BufferAttribute(physics.uv, 2));
       geometry.setIndex(physics.indices());
       geometry.computeVertexNormals();
-      const material = new THREE.ShaderMaterial({
+      const relighting = lightingModule ? new lightingModule.SignRelighting(renderer, geometry, texture) : null;
+      const material = relighting?.clothMaterial ?? new THREE.ShaderMaterial({
         uniforms: { photograph: { value: texture } },
         side: THREE.DoubleSide,
         transparent: true,
@@ -110,7 +129,7 @@ export default function Billboard() {
             vec3 imageColor = texture2D(photograph, vUv).rgb;
             float light = 0.42 + 0.58 * abs(n.z) + n.x * 0.18 - n.y * 0.12;
             if (!gl_FrontFacing) imageColor = mix(imageColor, vec3(0.16, 0.20, 0.21), 0.73);
-            float alpha = 1.0 - smoothstep(6.8, 8.4, -vPosition.y);
+            float alpha = 1.0 - smoothstep(5.65, 6.85, -vPosition.y);
             gl_FragColor = vec4(imageColor * light, alpha);
             #include <colorspace_fragment>
           }
@@ -128,7 +147,7 @@ export default function Billboard() {
         2.82, -3.51, -0.08, 0.85, -3.46, -0.08,
       ], 3));
       backingGeometry.setIndex([0, 2, 1, 0, 3, 2]);
-      const backingMaterial = new THREE.ShaderMaterial({
+      const backingMaterial = relighting?.backingMaterial ?? new THREE.ShaderMaterial({
         side: THREE.DoubleSide,
         vertexShader: `varying vec2 p; void main(){p=position.xy; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
         fragmentShader: `
@@ -145,12 +164,19 @@ export default function Billboard() {
       scene.add(new THREE.Mesh(backingGeometry, backingMaterial));
 
       const edgeGeometry = new THREE.BufferGeometry();
-      const edgeMaterial = new THREE.ShaderMaterial({
+      const edgeMaterial = relighting?.edgeMaterial ?? new THREE.ShaderMaterial({
         transparent: true,
         depthWrite: false,
         uniforms: { tint: { value: new THREE.Color('#b8c8ce') } },
         vertexShader: `varying float worldY; void main(){ worldY=position.y; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-        fragmentShader: `uniform vec3 tint; varying float worldY; void main(){ gl_FragColor=vec4(tint,0.65*(1.0-smoothstep(6.3,7.1,-worldY))); #include <colorspace_fragment> }`.replace('#include', '\n#include').replace('> }', '>\n}'),
+        fragmentShader: `
+          uniform vec3 tint;
+          varying float worldY;
+          void main() {
+            gl_FragColor = vec4(tint, 0.65 * (1.0 - smoothstep(5.65, 6.85, -worldY)));
+            #include <colorspace_fragment>
+          }
+        `,
       });
       const edges = new THREE.LineSegments(edgeGeometry, edgeMaterial);
       edges.frustumCulled = false;
@@ -178,7 +204,7 @@ export default function Billboard() {
         edgeGeometry.setAttribute('position', new THREE.BufferAttribute(edgePositions, 3).setUsage(THREE.DynamicDrawUsage));
         canvas.dataset.fabricBroken = String(physics.brokenCount);
       };
-      const repair = () => { physics.repair(); rebuild(); activeUntil = 0; wake(); };
+      const repair = () => { stopInvitation(); physics.repair(); rebuild(); activeUntil = 0; wake(); };
       let dragging = false;
       let pointer = -1;
       let lastPoint: Point | null = null;
@@ -190,6 +216,8 @@ export default function Billboard() {
       const down = (e: PointerEvent) => {
         if (!e.isPrimary) { up(); return; }
         if (dragging || e.button !== 0 || (e.target instanceof Element && e.target.closest('a'))) return;
+        stopInvitation();
+        wake(7);
         const point = location(e);
         dragging = true;
         pointer = e.pointerId;
@@ -221,6 +249,7 @@ export default function Billboard() {
       const keyboard = (e: KeyboardEvent) => {
         if (e.key === 'r' || e.key === 'R') { repair(); e.preventDefault(); }
         if (e.key === 'Enter' || e.key === ' ') {
+          stopInvitation();
           physics.cut([0.76, -2.48, 0], [2.87, -2.48, 0], 0.03);
           rebuild(); wake(7); e.preventDefault();
         }
@@ -241,6 +270,16 @@ export default function Billboard() {
         const dt = last ? Math.min((now - last) / 1000, 0.04) : 1 / 60;
         last = now;
         physics.step(dt);
+        if (invitationTime !== null) {
+          if (invitationTime < 0) {
+            try { sessionStorage.setItem('mqn-sign-invited-v1', '1'); } catch { /* Storage is optional. */ }
+          }
+          invitationTime += dt;
+          const progress = Math.max(0, Math.min(1, invitationTime / 2.4));
+          physics.invite(progress);
+          canvas.dataset.fabricInvitation = progress >= 1 ? 'finished' : progress.toFixed(2);
+          if (progress >= 1) invitationTime = null;
+        }
         rebuild();
         geometry.attributes.position.needsUpdate = true;
         geometry.computeVertexNormals();
@@ -251,10 +290,11 @@ export default function Billboard() {
           edgePositions[i * 3 + 2] = physics.positions[p + 2] + 0.002;
         }
         if (edgeGeometry.attributes.position) edgeGeometry.attributes.position.needsUpdate = true;
+        relighting?.update();
         renderer.render(scene, camera);
         canvas.dataset.fabricState = 'ready';
         interaction.tabIndex = 0;
-        if (!document.hidden && (dragging || now < activeUntil)) frameId = requestAnimationFrame(animate);
+        if (!document.hidden && (dragging || invitationTime !== null || now < activeUntil)) frameId = requestAnimationFrame(animate);
         else last = 0;
       };
       wake = (seconds = 0) => {
@@ -285,19 +325,21 @@ export default function Billboard() {
         root.removeEventListener('pointercancel', up);
         root.removeEventListener('lostpointercapture', up);
         interaction.removeEventListener('keydown', keyboard);
-        geometry.dispose(); material.dispose(); texture.dispose();
-        backingGeometry.dispose(); backingMaterial.dispose();
-        edgeGeometry.dispose(); edgeMaterial.dispose(); renderer.dispose();
+        geometry.dispose(); texture.dispose(); backingGeometry.dispose(); edgeGeometry.dispose();
+        if (relighting) relighting.dispose();
+        else { material.dispose(); backingMaterial.dispose(); edgeMaterial.dispose(); }
+        renderer.dispose();
       };
     })();
     return () => { cancelled = true; observer.disconnect(); teardown(); };
-  }, []);
+  }, [lighting]);
 
   return (
-    <div ref={rootRef} className={styles.scene}>
-      <div ref={photographRef} className={styles.photograph}>
+    <div ref={rootRef} className={styles.scene} data-lighting={lighting ? 'lamps' : 'original'}>
+      <div ref={photographRef} className={styles.photograph} data-door-active={doorActive}>
         <Image src={PHOTO} width={610} height={710} priority unoptimized draggable={false}
           alt="A nighttime street with a lit fabric sign reading Nothing lasts forever above the buildings." />
+        {lighting && <DoorSpill active={doorActive} />}
         <svg className={styles.doorLight} viewBox="0 0 610 710" aria-hidden="true">
           <defs>
             <clipPath id={`${lightId}-opening`}>
@@ -327,8 +369,8 @@ export default function Billboard() {
               fill="none" stroke="#deedd5" strokeWidth="1.3" />
           </g>
         </svg>
-        <a className={styles.door} href={site.instagramUrl} target="_blank" rel="noopener noreferrer"
-          aria-label={`Enter the doorway: @${site.handle} on Instagram`} />
+        <DoorLink href={site.instagramUrl} label={`Enter the doorway: @${site.handle} on Instagram`}
+          onActiveChange={setDoorActive} />
       </div>
       <canvas ref={canvasRef} className={styles.canvas} aria-label="Interactive fabric sign" data-fabric-broken="0" />
       <div ref={interactionRef} className={styles.interaction} tabIndex={-1}

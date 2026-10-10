@@ -1,0 +1,18 @@
+.door {
+  position: absolute;
+  z-index: 4;
+  display: block;
+  left: 89.098%;
+  top: 80.423%;
+  width: max(14.262%, 56px);
+  height: max(16.338%, 64px);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.door:focus-visible {
+  outline: 2px solid #dcebdc;
+  outline-offset: 2px;
+}

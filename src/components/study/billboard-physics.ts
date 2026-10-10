@@ -54,6 +54,8 @@ export class BillboardPhysics {
   private time = 0;
   private activated = false;
   private damaged = false;
+  private invitationActive = false;
+  private invitationFinished = false;
 
   constructor(options: { columns?: number; rows?: number } = {}) {
     this.columns = Math.max(4, Math.min(80, Math.floor(options.columns ?? 56)));
@@ -146,8 +148,59 @@ export class BillboardPhysics {
 
   indices(): number[] { return this.liveIndices; }
 
+  /** Pose a single lower-left curl during the first-arrival animation. */
+  invite(progress: number): void {
+    if (this.invitationFinished || this.activated || this.damaged || !Number.isFinite(progress)) return;
+    const t = Math.max(0, Math.min(1, progress));
+    if (t >= 1) {
+      this.positions.set(this.original);
+      this.previous.set(this.original);
+      this.invitationActive = false;
+      this.invitationFinished = true;
+      return;
+    }
+
+    const smooth = (value: number) => value * value * (3 - 2 * value);
+    const rise = smooth(Math.min(1, t / 0.28));
+    const fall = 1 - smooth(Math.max(0, Math.min(1, (t - 0.43) / 0.57)));
+    const lift = rise * fall;
+    this.invitationActive = lift > 0;
+
+    for (let row = 0; row < this.rows; row++) {
+      const bottom = Math.max(0, 1 - (1 - row / (this.rows - 1)) / 0.32);
+      if (bottom === 0) continue;
+      for (let col = 0; col < this.columns; col++) {
+        const left = Math.max(0, 1 - col / (this.columns - 1) / 0.38);
+        if (left === 0) continue;
+        const index = row * this.columns + col;
+        if (this.pinned[index]) continue;
+        const weight = left * left * bottom * bottom * lift;
+        const p = index * 3;
+        this.positions[p] = this.original[p] + weight * 0.035;
+        this.positions[p + 1] = this.original[p + 1] + weight * 0.17;
+        this.positions[p + 2] = this.original[p + 2] + weight * 0.25;
+        // Invitation is a pose, not stored velocity. It can be handed to the
+        // simulator on interruption without a sudden launch.
+        this.previous[p] = this.positions[p];
+        this.previous[p + 1] = this.positions[p + 1];
+        this.previous[p + 2] = this.positions[p + 2];
+      }
+    }
+  }
+
+  /** Stop future poses and let the current curl relax under normal physics. */
+  cancelInvitation(): void {
+    if (this.invitationFinished) return;
+    this.invitationFinished = true;
+    if (!this.invitationActive) return;
+    this.invitationActive = false;
+    this.previous.set(this.positions);
+    this.activated = true;
+  }
+
   grab(index: number, target: Vec3): void {
     if (!Number.isInteger(index) || index < 0 || index >= this.pinned.length) return;
+    this.cancelInvitation();
     if (this.pinned[index]) {
       const row = Math.floor(index / this.columns);
       const col = index % this.columns;
@@ -242,6 +295,7 @@ export class BillboardPhysics {
   }
 
   cut(from: Vec3, to: Vec3, radius = 0.025): void {
+    this.cancelInvitation();
     const r = Math.max(0.012, Math.min(0.2, radius));
     let changed = false;
     for (const spring of this.springs) {
@@ -279,6 +333,8 @@ export class BillboardPhysics {
   }
 
   repair(): void {
+    this.invitationActive = false;
+    this.invitationFinished = true;
     this.positions.set(this.original);
     this.previous.set(this.original);
     for (const spring of this.springs) spring.alive = true;
@@ -314,6 +370,7 @@ export class BillboardPhysics {
   }
 
   restore(value: unknown): boolean {
+    this.cancelInvitation();
     if (!value || typeof value !== 'object') return false;
     const saved = value as Partial<BillboardSnapshot>;
     if (saved.version !== 1 || saved.columns !== this.columns ||

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     description: site.line,
   },
   twitter: { card: 'summary_large_image' },
-  icons: { icon: '/favicon.svg' },
+  icons: { icon: `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/favicon.svg` },
 };
 
 export const viewport: Viewport = {

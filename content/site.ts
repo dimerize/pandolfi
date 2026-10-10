@@ -21,12 +21,8 @@ export const site = {
   city: '[city]',
   /* The skylines in his photographs are New York. Confirm. */
   timeZone: 'America/New_York',
-  /*
-    The live address. Drives canonical URLs, the sitemap and link previews.
-    Vercel assigns <project>.vercel.app until a domain is attached; replace
-    this with the real domain when there is one.
-  */
-  url: 'https://pandolfi.vercel.app',
+  /* Overridden by the hosting workflow if the site moves to a custom domain. */
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://dimerize.github.io/pandolfi',
 
   /* Optional: a phrase of his for the tab title while the tab is hidden. */
   hiddenPhrase: null as string | null,

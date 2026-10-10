@@ -1,0 +1,18 @@
+.scene { position: absolute; inset: 0; overflow: hidden; background: #050807; }
+.photograph { position: absolute; width: min(100vw, 85.9155dvh); height: min(100dvh, 116.3934vw); left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.photograph img { display: block; width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: left 20%; user-select: none; -webkit-user-drag: none; }
+.canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; }
+.canvas[data-fabric-state='ready'] { opacity: 1; }
+.interaction { position: absolute; z-index: 2; border: 0; background: none; touch-action: pinch-zoom; -webkit-user-select: none; user-select: none; cursor: crosshair; pointer-events: none; clip-path: polygon(0% 0%, 98% 2%, 100% 100%, 3% 98%); }
+.canvas[data-fabric-state='ready'] + .interaction { pointer-events: auto; }
+.interaction:focus-visible { outline: 1px solid #fff; outline-offset: 8px; }
+.door { position: absolute; z-index: 3; display: block; left: 84.26%; top: 74.08%; width: 9.35%; height: 12.4%; min-width: 44px; min-height: 44px; cursor: pointer; }
+.door:focus-visible { outline: 2px solid #e1eeee; outline-offset: 3px; }
+.doorLight { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.bloom { opacity: 0.14; transition: opacity 240ms ease; }
+.opening { opacity: 0.36; transition: opacity 240ms ease; }
+.jamb { opacity: 0.11; transition: opacity 240ms ease; }
+.photograph:has(.door:hover, .door:focus-visible, .door:active) .bloom { opacity: 0.5; }
+.photograph:has(.door:hover, .door:focus-visible, .door:active) .opening { opacity: 0.92; }
+.photograph:has(.door:hover, .door:focus-visible, .door:active) .jamb { opacity: 0.37; }
+@media (prefers-reduced-motion: reduce) { .interaction { display: none; } }

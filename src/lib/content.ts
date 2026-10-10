@@ -106,7 +106,7 @@ async function photo(slug: string, file: string, alt: unknown): Promise<Photo> {
   return {
     file,
     alt: alt.trim(),
-    src: `/work/${slug}/${file}`,
+    src: `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/work/${slug}/${file}`,
     width,
     height,
     placeholder: `data:image/jpeg;base64,${tiny.toString('base64')}`,

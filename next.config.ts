@@ -1,6 +1,11 @@
 import type { NextConfig } from 'next';
 
+const staticExport = process.env.STATIC_EXPORT === 'true';
+
 const nextConfig: NextConfig = {
+  output: staticExport ? 'export' : undefined,
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  trailingSlash: staticExport,
   /*
     Every route on this site is prerendered from files in content/. With
     Cache Components on, reading those files would count as request-time
@@ -11,9 +16,10 @@ const nextConfig: NextConfig = {
 
   images: {
     formats: ['image/avif', 'image/webp'],
+    unoptimized: staticExport,
   },
 
-  async headers() {
+  headers: staticExport ? undefined : async () => {
     return [
       {
         source: '/:path*',

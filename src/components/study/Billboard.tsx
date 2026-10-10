@@ -145,7 +145,13 @@ export default function Billboard() {
       scene.add(new THREE.Mesh(backingGeometry, backingMaterial));
 
       const edgeGeometry = new THREE.BufferGeometry();
-      const edgeMaterial = new THREE.LineBasicMaterial({ color: '#b8c8ce', transparent: true, opacity: 0.65 });
+      const edgeMaterial = new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        uniforms: { tint: { value: new THREE.Color('#b8c8ce') } },
+        vertexShader: `varying float worldY; void main(){ worldY=position.y; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+        fragmentShader: `uniform vec3 tint; varying float worldY; void main(){ gl_FragColor=vec4(tint,0.65*(1.0-smoothstep(6.3,7.1,-worldY))); #include <colorspace_fragment> }`.replace('#include', '\n#include').replace('> }', '>\n}'),
+      });
       const edges = new THREE.LineSegments(edgeGeometry, edgeMaterial);
       edges.frustumCulled = false;
       scene.add(edges);
@@ -182,13 +188,14 @@ export default function Billboard() {
           -(e.clientY - rect.top - dimensions.top) / (dimensions.scale * 100), 0];
       };
       const down = (e: PointerEvent) => {
-        if (dragging || !e.isPrimary || e.button !== 0) return;
+        if (!e.isPrimary) { up(); return; }
+        if (dragging || e.button !== 0 || (e.target instanceof Element && e.target.closest('a'))) return;
         const point = location(e);
         dragging = true;
         pointer = e.pointerId;
         lastPoint = point;
         interaction.dataset.dragging = 'true';
-        interaction.setPointerCapture(pointer);
+        root.setPointerCapture(pointer);
         e.preventDefault();
       };
       const move = (e: PointerEvent) => {
@@ -206,7 +213,7 @@ export default function Billboard() {
       const up = (e?: PointerEvent) => {
         if (!dragging || (e && e.pointerId !== pointer)) return;
         physics.release();
-        if (interaction.hasPointerCapture(pointer)) interaction.releasePointerCapture(pointer);
+        if (root.hasPointerCapture(pointer)) root.releasePointerCapture(pointer);
         dragging = false;
         interaction.dataset.dragging = 'false';
         lastPoint = null;
@@ -218,11 +225,11 @@ export default function Billboard() {
           rebuild(); wake(7); e.preventDefault();
         }
       };
-      interaction.addEventListener('pointerdown', down);
-      interaction.addEventListener('pointermove', move);
-      interaction.addEventListener('pointerup', up);
-      interaction.addEventListener('pointercancel', up);
-      interaction.addEventListener('lostpointercapture', up);
+      root.addEventListener('pointerdown', down);
+      root.addEventListener('pointermove', move);
+      root.addEventListener('pointerup', up);
+      root.addEventListener('pointercancel', up);
+      root.addEventListener('lostpointercapture', up);
       interaction.addEventListener('keydown', keyboard);
       let frameId = 0;
       let last = 0;
@@ -272,11 +279,11 @@ export default function Billboard() {
         cancelAnimationFrame(frameId);
         document.removeEventListener('visibilitychange', visibility);
         canvas.removeEventListener('webglcontextlost', contextLost);
-        interaction.removeEventListener('pointerdown', down);
-        interaction.removeEventListener('pointermove', move);
-        interaction.removeEventListener('pointerup', up);
-        interaction.removeEventListener('pointercancel', up);
-        interaction.removeEventListener('lostpointercapture', up);
+        root.removeEventListener('pointerdown', down);
+        root.removeEventListener('pointermove', move);
+        root.removeEventListener('pointerup', up);
+        root.removeEventListener('pointercancel', up);
+        root.removeEventListener('lostpointercapture', up);
         interaction.removeEventListener('keydown', keyboard);
         geometry.dispose(); material.dispose(); texture.dispose();
         backingGeometry.dispose(); backingMaterial.dispose();

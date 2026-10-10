@@ -1,5 +1,5 @@
-.scene { position: absolute; inset: 0; overflow: hidden; background: #050807; }
-.photograph { position: absolute; width: min(100vw, 85.9155dvh); height: min(100dvh, 116.3934vw); left: 50%; top: 50%; transform: translate(-50%, -50%); }
+.scene { position: absolute; inset: 0; overflow: hidden; background: #050807; touch-action: pinch-zoom; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.photograph { position: absolute; width: min(100vw, 85.9155svh); height: min(100svh, 116.3934vw); left: 50%; top: 50%; transform: translate(-50%, -50%); }
 .photograph img { display: block; width: 100%; height: 100%; max-width: none; object-fit: cover; object-position: left 20%; user-select: none; -webkit-user-drag: none; }
 .canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; }
 .canvas[data-fabric-state='ready'] { opacity: 1; }

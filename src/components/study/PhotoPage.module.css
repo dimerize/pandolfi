@@ -1,1 +1,21 @@
-.page { position: fixed; inset: 0; overflow: hidden; background: #050807; }
+/* These rules are present in the initial HTML, before the touch listener mounts. */
+:global(html):has(.page),
+:global(body):has(.page) {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #050807;
+}
+
+.page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: pinch-zoom;
+  background: #050807;
+}
